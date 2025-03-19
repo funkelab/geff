@@ -47,6 +47,10 @@ docs = [
     "mike"
 ]
 
+networkx = [
+    "networkx",
+]
+
 
 [tool.pixi.project]
 channels = ["conda-forge"]
@@ -64,6 +68,8 @@ dev = { features = ["dev"], solve-group = "default" }
 dev-sg = { features = ["dev", "spatial-graph"], solve-group = "default"}
 build = { features = ["build"], solve-group = "default" }
 docs = { features = ["docs"], solve-group = "default"}
+networkx = {features=["networkx"], solve-group = "default"}
+dev-nx = { features = ["dev", "networkx"], solve-group = "default"}
 
 [tool.pixi.tasks]
 

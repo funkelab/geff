@@ -1,9 +1,10 @@
-from importlib.metadata import version
 from pathlib import Path
 from typing import Optional
 
 import spatial_graph as sg
 import zarr
+
+import geff
 
 
 def write(
@@ -16,7 +17,7 @@ def write(
     group = zarr.open(path, "a")
 
     # write meta-data
-    group.attrs["geff_spec"] = version("geff")
+    group.attrs["geff_spec"] = geff.__version__
     group.attrs["position_attr"] = graph.position_attr
     group.attrs["directed"] = graph.directed
     group.attrs["roi"] = (
