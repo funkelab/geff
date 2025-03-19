@@ -1,4 +1,5 @@
 # Graph Exchange File Format (geff)
+
 <!--intro-start-->
 
 [![License](https://img.shields.io/pypi/l/geff.svg?color=green)](https://github.com/funkelab/geff/raw/main/LICENSE)
