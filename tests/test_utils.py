@@ -35,25 +35,51 @@ def test_validate(tmpdir):
     z["nodes"].create_dataset("ids", shape=(n_node))
 
     # Nodes missing position attrs
-    with pytest.raises(AssertionError, match="nodes group must contain an attrs/position array"):
+    with pytest.raises(AssertionError, match="nodes group must contain an attrs group"):
         validate(zpath)
-    z["nodes"].create_dataset("attrs/position", shape=(n_node))
+    z["nodes"].create_group("attrs")
+    with pytest.raises(AssertionError, match="nodes group must contain an attrs/position group"):
+        validate(zpath)
+    z["nodes"].create_group("attrs/position")
+    with pytest.raises(
+        AssertionError, match="node attribute group position must have values group"
+    ):
+        validate(zpath)
+    z["nodes"].create_dataset("attrs/position/values", shape=(n_node))
+    validate(zpath)
+
+    # valid and invalid "missing" arrays for position attribute
+    z["nodes"].create_dataset("attrs/position/missing", shape=(n_node), dtype=bool)
+    with pytest.raises(AssertionError, match="position group cannot have missing values"):
+        validate(zpath)
+    del z["nodes/attrs/position"]["missing"]
 
     # Attr shape mismatch
-    z["nodes"].create_dataset("attrs/badshape", shape=(n_node * 2))
+    z["nodes"].create_dataset("attrs/badshape/values", shape=(n_node * 2))
     with pytest.raises(
         AssertionError,
         match=(
-            f"Node attribute badshape has length {n_node * 2}, "
+            f"Node attribute badshape values has length {n_node * 2}, "
+            f"which does not match id length {n_node}"
+        ),
+    ):
+        validate(zpath)
+
+    del z["nodes/attrs"]["badshape"]
+    # Attr missing shape mismatch
+    z["nodes"].create_dataset("attrs/badshape/values", shape=(n_node))
+    z["nodes"].create_dataset("attrs/badshape/missing", shape=(n_node * 2))
+    with pytest.raises(
+        AssertionError,
+        match=(
+            f"Node attribute badshape missing mask has length {n_node * 2}, "
             f"which does not match id length {n_node}"
         ),
     ):
         validate(zpath)
     del z["nodes/attrs"]["badshape"]
 
-    # Edges missing
-    with pytest.raises(AssertionError, match="graph group must contain an edge group"):
-        validate(zpath)
+    # No edge group is okay, if the graph has no edges
     z.create_group("edges")
 
     # Missing edge ids
@@ -61,8 +87,9 @@ def test_validate(tmpdir):
         validate(zpath)
 
     # ids array must have last dim size 2
-    badshape = (5, 3)
-    z["edges"].create_dataset("ids", shape=(5, 3))
+    n_edges = 5
+    badshape = (n_edges, 3)
+    z["edges"].create_dataset("ids", shape=badshape)
     with pytest.raises(
         AssertionError,
         match=re.escape(
@@ -71,7 +98,32 @@ def test_validate(tmpdir):
     ):
         validate(zpath)
     del z["edges"]["ids"]
-    z["edges"].create_dataset("ids", shape=(5, 2))
+    z["edges"].create_dataset("ids", shape=(n_edges, 2))
+
+    # Attr shape mismatch
+    z["edges"].create_dataset("attrs/badshape/values", shape=(n_edges * 2, 2))
+    with pytest.raises(
+        AssertionError,
+        match=(
+            f"Edge attribute badshape values has length {n_edges * 2}, "
+            f"which does not match id length {n_edges}"
+        ),
+    ):
+        validate(zpath)
+    del z["edges/attrs"]["badshape"]
+
+    # Attr shape mismatch
+    z["edges"].create_dataset("attrs/badshape/values", shape=(n_edges, 2))
+    z["edges"].create_dataset("attrs/badshape/missing", shape=(n_edges * 2, 2))
+    with pytest.raises(
+        AssertionError,
+        match=(
+            f"Edge attribute badshape missing mask has length {n_edges * 2}, "
+            f"which does not match id length {n_edges}"
+        ),
+    ):
+        validate(zpath)
+    del z["edges/attrs"]["badshape"]
 
     # everything passes
     validate(zpath)
