@@ -38,7 +38,9 @@ dev = [
     "types-PyYAML",
 ]
 spatial-graph = [
-    "spatial-graph",
+    # "spatial-graph",
+    "spatial-graph @ git+https://github.com/funkelab/spatial_graph.git@e3c97b33d4d330e5f911f491fdd41e88ea31f4b7",
+
 ]
 docs = [
     "mkdocs-material",
