@@ -249,8 +249,9 @@ def read(path: Path | str, validate: bool = True) -> nx.Graph:
         edges = group["edges/ids"][:]
         graph.add_edges_from(edges.tolist())
 
-        # collect edge attributes
-        for name in group["edges/attrs"]:
-            _set_attribute_values(graph, edges, group, name, nodes=False)
+        # collect edge attributes if they exist
+        if "edges/attrs" in group:
+            for name in group["edges/attrs"]:
+                _set_attribute_values(graph, edges, group, name, nodes=False)
 
     return graph
