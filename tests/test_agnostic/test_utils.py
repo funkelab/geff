@@ -21,6 +21,7 @@ def test_validate(tmp_path):
         validate(zpath)
     z.attrs["geff_version"] = "v0.0.1"
     z.attrs["directed"] = True
+    z.attrs["position_attr"] = "position"
     z.attrs["roi_min"] = [0, 0]
     z.attrs["roi_max"] = [100, 100]
 

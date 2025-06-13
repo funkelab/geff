@@ -27,7 +27,7 @@ def validate(path: str | Path):
 
     # graph attrs validation
     # Raises pydantic.ValidationError or ValueError
-    GeffMetadata(**graph.attrs)
+    meta = GeffMetadata(**graph.attrs)
 
     assert "nodes" in graph, "graph group must contain a nodes group"
     nodes = graph["nodes"]
@@ -35,12 +35,14 @@ def validate(path: str | Path):
     # ids and attrs/position are required and should be same length
     assert "ids" in nodes.array_keys(), "nodes group must contain an ids array"
     assert "attrs" in nodes.group_keys(), "nodes group must contain an attrs group"
-    assert "position" in nodes["attrs"].group_keys(), (
-        "nodes group must contain an attrs/position group"
-    )
-    assert "missing" not in nodes["attrs/position"].array_keys(), (
-        "position group cannot have missing values"
-    )
+
+    if meta.position_attr is not None:
+        assert meta.position_attr in nodes["attrs"].group_keys(), (
+            "nodes group must contain an attrs/position group"
+        )
+        assert "missing" not in nodes[f"attrs/{meta.position_attr}"].array_keys(), (
+            "position group cannot have missing values"
+        )
 
     # Attribute array length should match id length
     id_len = nodes["ids"].shape[0]

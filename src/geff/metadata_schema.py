@@ -33,34 +33,51 @@ class GeffMetadata(BaseModel):
 
     geff_version: str = Field(pattern=SUPPORTED_VERSIONS_REGEX)
     directed: bool
-    roi_min: tuple[float, ...]
-    roi_max: tuple[float, ...]
-    position_attr: str = "position"
+    roi_min: tuple[float, ...] | None = None
+    roi_max: tuple[float, ...] | None = None
+    position_attr: str | None = None
     axis_names: tuple[str, ...] | None = None
     axis_units: tuple[str, ...] | None = None
 
     def model_post_init(self, *args, **kwargs):
-        if len(self.roi_min) != len(self.roi_max):
-            raise ValueError(
-                f"Roi min {self.roi_min} and roi max {self.roi_max} have different lengths."
-            )
-        ndim = len(self.roi_min)
-        for dim in range(ndim):
-            if self.roi_min[dim] > self.roi_max[dim]:
+        # Check spatial metadata only if position is provided
+        if self.position_attr is not None:
+            # Check that rois are there if position provided
+            if self.roi_min is None or self.roi_max is None:
                 raise ValueError(
-                    f"Roi min {self.roi_min} is greater than max {self.roi_max} in dimension {dim}"
+                    f"Position attribute {self.position_attr} has been specified, "
+                    "but roi_min and/or roi_max are not specified."
                 )
 
-        if self.axis_names is not None and len(self.axis_names) != ndim:
-            raise ValueError(
-                f"Length of axis names ({len(self.axis_names)}) does not match number of"
-                f" dimensions in roi ({ndim})"
-            )
-        if self.axis_units is not None and len(self.axis_units) != ndim:
-            raise ValueError(
-                f"Length of axis units ({len(self.axis_units)}) does not match number of"
-                f" dimensions in roi ({ndim})"
-            )
+            if len(self.roi_min) != len(self.roi_max):
+                raise ValueError(
+                    f"Roi min {self.roi_min} and roi max {self.roi_max} have different lengths."
+                )
+            ndim = len(self.roi_min)
+            for dim in range(ndim):
+                if self.roi_min[dim] > self.roi_max[dim]:
+                    raise ValueError(
+                        f"Roi min {self.roi_min} is greater than "
+                        f"max {self.roi_max} in dimension {dim}"
+                    )
+
+            if self.axis_names is not None and len(self.axis_names) != ndim:
+                raise ValueError(
+                    f"Length of axis names ({len(self.axis_names)}) does not match number of"
+                    f" dimensions in roi ({ndim})"
+                )
+            if self.axis_units is not None and len(self.axis_units) != ndim:
+                raise ValueError(
+                    f"Length of axis units ({len(self.axis_units)}) does not match number of"
+                    f" dimensions in roi ({ndim})"
+                )
+        # If no position, check that other spatial metadata is not provided
+        else:
+            if any([self.roi_min, self.roi_max, self.axis_names, self.axis_units]):
+                raise ValueError(
+                    "Spatial metadata (roi_min, roi_max, axis_names or axis_units) provided without"
+                    " position_attr"
+                )
 
     def write(self, group: zarr.Group | Path):
         """Helper function to write GeffMetadata into the zarr geff group.

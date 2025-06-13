@@ -68,8 +68,8 @@ def get_edge_attrs(graph: nx.Graph) -> list[str]:
 
 def write(
     graph: nx.Graph,
-    position_attr: str,
     path: str | Path,
+    position_attr: str | None = None,
     axis_names: list[str] | None = None,
     axis_units: list[str] | None = None,
     zarr_format: int = 3,
@@ -79,9 +79,10 @@ def write(
 
     Args:
         graph (nx.Graph): a networkx graph where every node has a position attribute
-        position_attr (str): the name of the position attribute present on every node
         path (str | Path): the path to the output zarr. Opens in append mode,
             so will only overwrite geff-controlled groups.
+        position_attr (Optional[str]): the name of the position attribute present on every node.
+            Defaults to None.
         axis_names (Optional[list[str]], optional): The names of the spatial dims
             represented in position attribute. Defaults to None. Will override
             value in graph attributes if provided.
@@ -107,14 +108,20 @@ def write(
 
     node_attrs = get_node_attrs(graph)
     if validate:
-        if position_attr not in node_attrs:
-            raise ValueError(f"Position attribute {position_attr} not found in graph")
-        for node, data in graph.nodes(data=True):
-            if position_attr not in data:
-                raise ValueError(f"Node {node} does not have position attribute {position_attr}")
+        if position_attr is not None:
+            if position_attr not in node_attrs:
+                raise ValueError(f"Position attribute {position_attr} not found in graph")
+            for node, data in graph.nodes(data=True):
+                if position_attr not in data:
+                    raise ValueError(
+                        f"Node {node} does not have position attribute {position_attr}"
+                    )
 
     # write metadata
-    roi_min, roi_max = get_roi(graph, position_attr=position_attr)
+    if position_attr is not None:
+        roi_min, roi_max = get_roi(graph, position_attr=position_attr)
+    else:
+        roi_min, roi_max = None, None
     metadata = GeffMetadata(
         geff_version=geff.__version__,
         directed=isinstance(graph, nx.DiGraph),
@@ -148,10 +155,8 @@ def write(
                 mask = 1
             values.append(value)
             missing.append(mask)
-        # Set position attribute to default "position", original stored in metadata
-        if name == position_attr:
-            name = "position"
-        else:
+        # Missing value are only allowed for non-position attribute
+        if name != position_attr:
             # Always store missing array even if all values are present
             group[f"nodes/attrs/{name}/missing"] = np.array(missing, dtype=bool)
         group[f"nodes/attrs/{name}/values"] = np.array(values)
@@ -207,8 +212,9 @@ def _set_attribute_values(
             # Get either individual item or list instead of setting with np.array
             val = val.tolist() if val.size > 1 else val.item()
             if nodes:
-                if name == "position" and "position_attr" in graph.graph:
-                    graph_attr = graph.graph["position_attr"]
+                # Do subsequent todos needs to be changed with optional position?
+                if name == "position" and "position_attr" in graph.graph:  # TODO
+                    graph_attr = graph.graph["position_attr"]  # TODO
                 else:
                     graph_attr = name
                 graph.nodes[_id.item()][graph_attr] = val

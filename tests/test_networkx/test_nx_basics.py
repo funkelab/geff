@@ -56,7 +56,7 @@ def test_read_write_consistency(tmp_path, node_dtype, node_attr_dtypes, edge_att
 
     path = tmp_path / "rw_consistency.zarr/graph"
 
-    geff_nx.write(graph, "pos", path, axis_names=axis_names, axis_units=axis_units)
+    geff_nx.write(graph, path, position_attr="pos", axis_names=axis_names, axis_units=axis_units)
 
     compare = geff_nx.read(path)
 
@@ -71,6 +71,48 @@ def test_read_write_consistency(tmp_path, node_dtype, node_attr_dtypes, edge_att
 
     assert compare.graph["axis_names"] == axis_names
     assert compare.graph["axis_units"] == axis_units
+
+
+@pytest.mark.parametrize("node_dtype", node_dtypes)
+@pytest.mark.parametrize("node_attr_dtypes", node_attr_dtypes)
+@pytest.mark.parametrize("edge_attr_dtypes", edge_attr_dtypes)
+@pytest.mark.parametrize("directed", [True, False])
+def test_read_write_no_spatial(tmp_path, node_dtype, node_attr_dtypes, edge_attr_dtypes, directed):
+    graph = nx.DiGraph() if directed else nx.Graph()
+
+    nodes = np.array([10, 2, 127, 4, 5], dtype=node_dtype)
+    attrs = np.array([4, 9, 10, 2, 8], dtype=node_attr_dtypes["position"])
+    for node, pos in zip(nodes, attrs):
+        graph.add_node(node.item(), attr=pos.tolist())
+
+    edges = np.array(
+        [
+            [10, 2],
+            [2, 127],
+            [2, 4],
+            [4, 5],
+        ],
+        dtype=node_dtype,
+    )
+    scores = np.array([0.1, 0.2, 0.3, 0.4], dtype=edge_attr_dtypes["score"])
+    colors = np.array([1, 2, 3, 4], dtype=edge_attr_dtypes["color"])
+    for edge, score, color in zip(edges, scores, colors):
+        graph.add_edge(*edge.tolist(), score=score.item(), color=color.item())
+
+    path = tmp_path / "rw_consistency.zarr/graph"
+
+    geff_nx.write(graph, path)
+
+    compare = geff_nx.read(path)
+
+    assert set(graph.nodes) == set(compare.nodes)
+    assert set(graph.edges) == set(compare.edges)
+    for node in nodes:
+        assert graph.nodes[node.item()]["attr"] == compare.nodes[node.item()]["attr"]
+
+    for edge in edges:
+        assert graph.edges[edge.tolist()]["score"] == compare.edges[edge.tolist()]["score"]
+        assert graph.edges[edge.tolist()]["color"] == compare.edges[edge.tolist()]["color"]
 
 
 def test_write_empty_graph():
