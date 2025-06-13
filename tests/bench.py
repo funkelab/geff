@@ -5,7 +5,7 @@ import networkx as nx
 import numpy as np
 import pytest
 
-import geff.networkx as geff_nx
+import geff.networkx.io as geff_nx
 from geff.utils import validate
 
 ROUNDS = 3
@@ -36,7 +36,7 @@ def big_graph():
 @pytest.fixture(scope="session")
 def big_graph_path(tmpdir_factory, big_graph):
     tmp_path = Path(tmpdir_factory.mktemp("data").join("test.zarr"))
-    geff_nx.write(graph=big_graph, path=tmp_path, position_attr="position")
+    geff_nx.write_nx(graph=big_graph, path=tmp_path, position_attr="position")
     return tmp_path
 
 
@@ -44,7 +44,7 @@ def test_write(benchmark, tmp_path, big_graph):
     path = tmp_path / "test_write.zarr"
 
     benchmark.pedantic(
-        geff_nx.write,
+        geff_nx.write_nx,
         kwargs={"graph": big_graph, "position_attr": "position", "path": path},
         rounds=ROUNDS,
     )
@@ -56,5 +56,5 @@ def test_validate(benchmark, big_graph_path):
 
 def test_read(benchmark, big_graph_path):
     benchmark.pedantic(
-        geff_nx.read, kwargs={"path": big_graph_path, "validate": False}, rounds=ROUNDS
+        geff_nx.read_nx, kwargs={"path": big_graph_path, "validate": False}, rounds=ROUNDS
     )

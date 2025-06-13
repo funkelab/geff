@@ -66,7 +66,7 @@ def get_edge_attrs(graph: nx.Graph) -> list[str]:
     return list({k for e in graph.edges for k in graph.edges[e]})
 
 
-def write(
+def write_nx(
     graph: nx.Graph,
     position_attr: str,
     path: str | Path,
@@ -217,7 +217,7 @@ def _set_attribute_values(
                 graph.edges[source, target][name] = val
 
 
-def read(path: Path | str, validate: bool = True) -> nx.Graph:
+def read_nx(path: Path | str, validate: bool = True) -> nx.Graph:
     """Read a geff file into a networkx graph. Metadata attributes will be stored in
     the graph attributes, accessed via `G.graph[key]` where G is a networkx graph.
 
