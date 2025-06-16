@@ -16,8 +16,7 @@ dependencies = [
     "pydantic", 
     "pyyaml",
     "numcodecs<0.16", # TODO: remove pin once the 16 release is stable
-    "networkx"
-]
+    "networkx"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",

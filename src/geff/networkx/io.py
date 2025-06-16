@@ -72,7 +72,7 @@ def write(
     path: str | Path,
     axis_names: list[str] | None = None,
     axis_units: list[str] | None = None,
-    zarr_format: int = 3,
+    zarr_format: int = 2,
     validate: bool = True,
 ):
     """Write a networkx graph to the geff file format
@@ -89,7 +89,7 @@ def write(
             represented in position attribute. Defaults to None. Will override value
             in graph attributes if provided.
         zarr_format (Optional[int], optional): The version of zarr to write.
-            Defaults to 3.
+            Defaults to 2.
         validate (bool, optional): Flag indicating whether to perform validation on the
             networkx graph before writing anything to disk. If set to False and there are
             missing attributes, will likely fail with a KeyError, leading to an incomplete
